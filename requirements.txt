@@ -1,1 +1,6 @@
 easyocr
+beautifulsoup4
+requests
+meta-ai-api
+googlesearch-python
+nltk
