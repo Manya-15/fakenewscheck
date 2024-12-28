@@ -213,7 +213,7 @@ elif option == "Text Checker":
 
             # Extract keywords and search
             keywords = extract_keywords(user_text)
-            print(f"Extracted Keywords: {keywords}")
+            st.write(f"Extracted Keywords: {keywords}")
             search_results = perform_search(keywords)
             
             # Scrape content for each URL
@@ -227,7 +227,7 @@ elif option == "Text Checker":
             # Save data to CSV
             filename = "web_content_summary.csv"
             save_to_csv(scraped_data, filename)
-            print(f"\nData saved to '{filename}'")
+            st.write(f"\nData saved")
 
             # Read the saved data
             corpus = read_csv(filename)
