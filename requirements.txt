@@ -1,6 +1,6 @@
 easyocr
 beautifulsoup4
 requests
-meta-ai-api
+google-generativeai
 googlesearch-python
 nltk
