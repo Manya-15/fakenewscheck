@@ -172,7 +172,7 @@ if option =="Image checker":
 
             # Extract keywords and search
             # extracted_text = "STUDENTS HAVING LESS THAN 75% ATTENDANCE WILL NOW PAY 28% ADDITIONAL GST ON THEIR EMESTER FEES: 3oe"
-            keywords = extract_keywords(user_text)
+            keywords = extract_keywords(extracted_text)
             print(f"Extracted Keywords: {keywords}")
             search_results = perform_search(keywords)
             
