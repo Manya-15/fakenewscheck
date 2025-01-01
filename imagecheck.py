@@ -194,14 +194,14 @@ if option =="Image checker":
     
             # Step 2: Get the overall summary using MetaAI API
             if corpus:
-                summary = get_overall_summary(user_text)
+                summary = get_overall_summary(extracted_text)
                 st.subheader("Summary:")
                 st.write(summary)
             else:
                 st.write("No relevant content found in the search results!")
             
             # Generate the table for detailed responses
-            tab = fixed(filename, user_text)
+            tab = fixed(filename, extracted_text)
             st.subheader("Detailed Responses:")
             st.table(tab)
         else:
