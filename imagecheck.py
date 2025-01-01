@@ -5,12 +5,16 @@ import numpy as np
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from meta_ai_api import MetaAI
+# from meta_ai_api import MetaAI
 import csv
 from googlesearch import search
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+import google.generativeai as genai
+
+genai.configure(api_key="AIzaSyCRddo9GT4YsDz4Grlk36RlfGmqItA1Mp0")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # NLTK setup
 # nltk.download('punkt')
@@ -98,19 +102,23 @@ def get_overall_summary(corpus):
     """
     Use MetaAI API to summarize the corpus into a single paragraph.
     """
-    ai = MetaAI()
+    # ai = MetaAI()
     # combined_corpus = "\n".join(corpus)  # Combine all the content
-    print("Sending content to MetaAI API for summarization...\n")
-    response = ai.prompt(message=f"Tell whether the news: {corpus} is fake or not and why.")
+    print("Sending content to gemini API for summarization...\n")
+    
+    response = model.generate_content(f"Tell whether the news: {corpus} is fake or not and why")
+    print(response.text)
+    return response.text
+    # response = ai.prompt(message=f"Tell whether the news: {corpus} is fake or not and why.")
     # response = ai.prompt(message = "what is the weather in delhi right now")
-    return response
+    
 
 def fixed(file_path, headline, output_file="table.csv"):
     """
     Process the content from the CSV file, generate responses using MetaAI API,
     and save the results to a new CSV file.
     """
-    ai = MetaAI()
+    # ai = MetaAI()
     # Read the input file
     df = pd.read_csv(file_path)
 
@@ -123,12 +131,11 @@ def fixed(file_path, headline, output_file="table.csv"):
 
         if content not in ("No significant content found.", "Failed to fetch content"):
             print(f"Processing URL: {url}")
-            print("Sending content to MetaAI API for fixing...\n")
-            response = ai.prompt(
-                message=f"In accordance to the headline: {headline}, frame 1 line that contains all the relevant information to the headline from the text: {content}."
-            )
+            print("Sending content to gemini API for fixing...\n")
+            # response = ai.prompt(message=f"In accordance to the headline: {headline}, frame 1 line that contains all the relevant information to the headline from the text: {content}.")
+            response = model.generate_content(f"In accordance to the headline: {headline}, frame 1 line that contains all the relevant information to the headline from the text: {content}.")
             # Append the result as a dictionary
-            results.append({'URL': url, 'Response': response['message']})
+            results.append({'URL': url, 'Response': response.text})
 
     # Create a new DataFrame from the results
     output_df = pd.DataFrame(results)
@@ -165,7 +172,7 @@ if option =="Image checker":
 
             # Extract keywords and search
             # extracted_text = "STUDENTS HAVING LESS THAN 75% ATTENDANCE WILL NOW PAY 28% ADDITIONAL GST ON THEIR EMESTER FEES: 3oe"
-            keywords = extract_keywords(extracted_text)
+            keywords = extract_keywords(user_text)
             print(f"Extracted Keywords: {keywords}")
             search_results = perform_search(keywords)
             
@@ -181,22 +188,22 @@ if option =="Image checker":
             filename = "web_content_summary.csv"
             save_to_csv(scraped_data, filename)
             print(f"\nData saved to '{filename}'")
-            # st.write("URLs scrapped")
 
+            # Read the saved data
             corpus = read_csv(filename)
-
+    
             # Step 2: Get the overall summary using MetaAI API
             if corpus:
-                summary = get_overall_summary(extracted_text)
-                # print("\n### Overall Summary ###")
-                st.write(summary['message'])
+                summary = get_overall_summary(user_text)
+                st.subheader("Summary:")
+                st.write(summary)
             else:
-                print("No content found in the CSV file!")
+                st.write("No relevant content found in the search results!")
             
-            tab = fixed(filename, extracted_text)
+            # Generate the table for detailed responses
+            tab = fixed(filename, user_text)
+            st.subheader("Detailed Responses:")
             st.table(tab)
-
-
         else:
             st.write("No text found in the image.")
 
@@ -213,7 +220,7 @@ elif option == "Text Checker":
 
             # Extract keywords and search
             keywords = extract_keywords(user_text)
-            st.write(f"Extracted Keywords: {keywords}")
+            print(f"Extracted Keywords: {keywords}")
             search_results = perform_search(keywords)
             
             # Scrape content for each URL
@@ -227,7 +234,7 @@ elif option == "Text Checker":
             # Save data to CSV
             filename = "web_content_summary.csv"
             save_to_csv(scraped_data, filename)
-            st.write(f"\nData saved")
+            print(f"\nData saved to '{filename}'")
 
             # Read the saved data
             corpus = read_csv(filename)
@@ -236,7 +243,7 @@ elif option == "Text Checker":
             if corpus:
                 summary = get_overall_summary(user_text)
                 st.subheader("Summary:")
-                st.write(summary['message'])
+                st.write(summary)
             else:
                 st.write("No relevant content found in the search results!")
             
