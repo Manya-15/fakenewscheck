@@ -4,3 +4,5 @@ requests
 google-generativeai
 googlesearch-python
 nltk
+youtube_dl 
+youtube_transcript_api
