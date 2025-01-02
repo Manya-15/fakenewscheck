@@ -1,14 +1,15 @@
 import streamlit as st
 from PIL import Image
 import easyocr
+from youtube_transcript_api import YouTubeTranscriptApi as yta
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-# from meta_ai_api import MetaAI
 import csv
 from googlesearch import search
 import nltk
+import re
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import google.generativeai as genai
@@ -114,12 +115,7 @@ def get_overall_summary(corpus):
     
 
 def fixed(file_path, headline, output_file="table.csv"):
-    """
-    Process the content from the CSV file, generate responses using MetaAI API,
-    and save the results to a new CSV file.
-    """
-    # ai = MetaAI()
-    # Read the input file
+    
     df = pd.read_csv(file_path)
 
     # Create a list to store results
@@ -146,9 +142,23 @@ def fixed(file_path, headline, output_file="table.csv"):
 
     return output_df
 
+def get_video_id(url):
+    video_id_pattern = r"(?<=v=)[^#\&\?]*"
+    match = re.search(video_id_pattern, url)
+    return match.group(0) if match else None
+
+# Function to fetch transcript from YouTube video ID
+def get_transcript(video_id):
+    try:
+        data = yta.get_transcript(video_id, languages=['en'])
+        transcript = ' '.join([entry['text'] for entry in data])
+        return transcript
+    except Exception as e:
+        return f"Error fetching transcript: {e}"
+
 
 st.sidebar.title("Fact Checking System")
-option = st.sidebar.selectbox("Select an option", ["Image checker", "Text Checker"])
+option = st.sidebar.selectbox("Select an option", ["Image checker", "Text Checker", "Video checker"])
 
 if option =="Image checker":
     st.title("Fake News Detection from Image")
@@ -254,6 +264,49 @@ elif option == "Text Checker":
 
         else:
             st.write("Please enter some text to analyze.")
+
+elif option == "Video checker":
+    st.title("YouTube Video Fake News Detection")
+    st.write("Enter the YouTube link of the video to analyze its authenticity.")
+
+    # User input for YouTube link
+    youtube_url = st.text_input("Enter YouTube video URL:")
+
+    if st.button("Analyze Video"):
+        if youtube_url.strip():
+            # Extract video ID from the YouTube URL
+            video_id = get_video_id(youtube_url)
+            if video_id:
+                # Fetch the transcript of the video
+                transcript = get_transcript(video_id)
+                # Extract keywords from transcript and search online
+                keywords = extract_keywords(transcript)
+                search_results = perform_search(keywords)
+                
+                # Scrape content from search results
+                scraped_data = []
+                for idx, url in enumerate(search_results, 1):
+                    content = scrape_important_content(url)
+                    scraped_data.append([url, content])
+
+                # Save data to CSV and display results
+                filename = "web_content_summary.csv"
+                save_to_csv(scraped_data, filename)
+                corpus = read_csv(filename)
+                if corpus:
+                    summary = get_overall_summary(transcript)
+                    st.subheader("Summary:")
+                    st.write(summary)
+                
+                # Generate and display the table for detailed responses
+                headline = transcript.split('.')[0]  # A simple heuristic to generate headline from the transcript
+                table = fixed(filename, headline)
+                st.subheader("Detailed Responses:")
+                st.table(table)
+            else:
+                st.write("Invalid YouTube URL.")
+        else:
+            st.write("Please enter a YouTube URL.")
 
 
 
